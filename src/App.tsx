@@ -6,6 +6,7 @@ import {
   signOutUser,
   subscribeToUserInteractions,
   deleteInteraction,
+  syncUserProfile,
 } from './firebase';
 import type { InteractionDocument, UserProfile } from './types';
 import { Navbar } from './components/Navbar';
@@ -13,6 +14,9 @@ import { LandingPage } from './components/LandingPage';
 import { HistorySidebar } from './components/HistorySidebar';
 import { ReflectionStudio } from './components/ReflectionStudio';
 import { SecurityModal } from './components/SecurityModal';
+import { AdminDashboard } from './components/AdminDashboard';
+import { NotificationSettingsModal } from './components/NotificationSettingsModal';
+import { MoodDashboardModal } from './components/MoodDashboardModal';
 
 export default function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -24,17 +28,41 @@ export default function App() {
   const [activeInteraction, setActiveInteraction] = useState<InteractionDocument | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [securityModalOpen, setSecurityModalOpen] = useState<boolean>(false);
+  const [adminDashboardOpen, setAdminDashboardOpen] = useState<boolean>(false);
+  const [notificationsModalOpen, setNotificationsModalOpen] = useState<boolean>(false);
+  const [moodDashboardOpen, setMoodDashboardOpen] = useState<boolean>(false);
+  const [isReadingMode, setIsReadingMode] = useState<boolean>(false);
+  const [previousSidebarState, setPreviousSidebarState] = useState<boolean>(true);
 
-  // Monitor Firebase Authentication state
+  const handleToggleReadingMode = (forced?: boolean) => {
+    setIsReadingMode((prev) => {
+      const next = typeof forced === 'boolean' ? forced : !prev;
+      if (next) {
+        setPreviousSidebarState(sidebarOpen);
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(previousSidebarState);
+      }
+      return next;
+    });
+  };
+
+  // Monitor Firebase Authentication state and sync role profile
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-        });
+        try {
+          const profile = await syncUserProfile(firebaseUser);
+          setUser(profile);
+        } catch {
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            role: firebaseUser.email === 'rafikrafik3956@gmail.com' ? 'admin' : 'user',
+          });
+        }
       } else {
         setUser(null);
         setActiveInteraction(null);
@@ -147,22 +175,28 @@ export default function App() {
           onSignOut={handleSignOut}
           onNewReflection={handleNewReflection}
           onOpenSecurityModal={() => setSecurityModalOpen(true)}
+          onOpenAdmin={() => setAdminDashboardOpen(true)}
+          onOpenNotifications={() => setNotificationsModalOpen(true)}
+          onOpenMoodDashboard={() => setMoodDashboardOpen(true)}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+          isReadingMode={isReadingMode}
         />
 
         <main className="flex flex-1 overflow-hidden">
           {user ? (
             <div className="flex flex-1 w-full overflow-hidden">
-              <HistorySidebar
-                interactions={interactions}
-                activeInteractionId={activeInteraction?.id || null}
-                onSelectInteraction={handleSelectInteraction}
-                onDeleteInteraction={handleDeleteInteraction}
-                onNewReflection={handleNewReflection}
-                isOpen={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
-              />
+              {!isReadingMode && (
+                <HistorySidebar
+                  interactions={interactions}
+                  activeInteractionId={activeInteraction?.id || null}
+                  onSelectInteraction={handleSelectInteraction}
+                  onDeleteInteraction={handleDeleteInteraction}
+                  onNewReflection={handleNewReflection}
+                  isOpen={sidebarOpen}
+                  onClose={() => setSidebarOpen(false)}
+                />
+              )}
 
               <ReflectionStudio
                 user={user}
@@ -170,6 +204,9 @@ export default function App() {
                 onInteractionSaved={handleInteractionSaved}
                 onDeleteInteraction={handleDeleteInteraction}
                 onNewReflection={handleNewReflection}
+                onOpenMoodDashboard={() => setMoodDashboardOpen(true)}
+                isReadingMode={isReadingMode}
+                onToggleReadingMode={handleToggleReadingMode}
               />
             </div>
           ) : (
@@ -187,6 +224,33 @@ export default function App() {
         isOpen={securityModalOpen}
         onClose={() => setSecurityModalOpen(false)}
       />
+
+      {adminDashboardOpen && user && (
+        <AdminDashboard
+          currentUser={user}
+          onClose={() => setAdminDashboardOpen(false)}
+          interactions={interactions}
+        />
+      )}
+
+      {user && (
+        <NotificationSettingsModal
+          isOpen={notificationsModalOpen}
+          onClose={() => setNotificationsModalOpen(false)}
+          userId={user.uid}
+        />
+      )}
+
+      {user && (
+        <MoodDashboardModal
+          isOpen={moodDashboardOpen}
+          onClose={() => setMoodDashboardOpen(false)}
+          interactions={interactions}
+          onSelectInteraction={handleSelectInteraction}
+          onNewReflection={handleNewReflection}
+          user={user}
+        />
+      )}
     </div>
   );
 }

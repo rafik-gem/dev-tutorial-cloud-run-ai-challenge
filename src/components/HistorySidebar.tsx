@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Clock,
   Plus,
+  MapPin,
 } from 'lucide-react';
 import type { InteractionDocument, ReflectionMode } from '../types';
 
@@ -61,7 +62,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const handleExportMarkdown = (e: React.MouseEvent, interaction: InteractionDocument) => {
     e.stopPropagation();
     let md = `# ${interaction.title || 'Journal Reflection'}\n\n`;
-    md += `*Mode: ${interaction.mode} | Date: ${new Date(interaction.createdAt).toLocaleDateString()}*\n\n---\n\n`;
+    md += `*Mode: ${interaction.mode} | Date: ${new Date(interaction.createdAt).toLocaleDateString()}*\n\n`;
+    if (interaction.mood) {
+      md += `*Mood: ${interaction.mood.emoji} ${interaction.mood.label} (Energy: ${interaction.mood.score}/5)*\n\n`;
+    }
+    if (interaction.location) {
+      md += `*Location: ${interaction.location.name}${interaction.location.address ? ` (${interaction.location.address})` : ''}*\n\n`;
+    }
+    md += `---\n\n`;
 
     interaction.messages.forEach((m) => {
       const sender = m.role === 'user' ? '### 👤 You' : `### ✨ Gemini (${m.modelUsed || 'Reflection'})`;
@@ -202,6 +210,26 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 <p className="line-clamp-2 text-[11px] text-slate-400 leading-relaxed">
                   {previewText}
                 </p>
+
+                <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                  {item.mood && (
+                    <div
+                      id={`history-item-mood-${item.id}`}
+                      className="flex items-center gap-1 text-[10px] text-amber-200 bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-500/20 max-w-fit"
+                      title={`Mood: ${item.mood.label} (${item.mood.score}/5)`}
+                    >
+                      <span>{item.mood.emoji}</span>
+                      <span>{item.mood.label}</span>
+                    </div>
+                  )}
+
+                  {item.location && (
+                    <div className="flex items-center gap-1 text-[10px] text-indigo-300 bg-indigo-950/40 px-2 py-0.5 rounded-md border border-indigo-500/20 max-w-fit truncate">
+                      <MapPin className="h-2.5 w-2.5 shrink-0 text-indigo-400" />
+                      <span className="truncate">{item.location.name}</span>
+                    </div>
+                  )}
+                </div>
 
                 <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-800/60">
                   <span className="flex items-center gap-1">
