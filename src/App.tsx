@@ -7,8 +7,10 @@ import {
   subscribeToUserInteractions,
   deleteInteraction,
   syncUserProfile,
+  updateUserTheme,
 } from './firebase';
-import type { InteractionDocument, UserProfile } from './types';
+import type { InteractionDocument, UserProfile, ColorThemeId } from './types';
+import { COLOR_THEMES } from './types';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { HistorySidebar } from './components/HistorySidebar';
@@ -17,6 +19,7 @@ import { SecurityModal } from './components/SecurityModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { NotificationSettingsModal } from './components/NotificationSettingsModal';
 import { MoodDashboardModal } from './components/MoodDashboardModal';
+import { ThemeSettingsModal } from './components/ThemeSettingsModal';
 
 export default function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -31,8 +34,37 @@ export default function App() {
   const [adminDashboardOpen, setAdminDashboardOpen] = useState<boolean>(false);
   const [notificationsModalOpen, setNotificationsModalOpen] = useState<boolean>(false);
   const [moodDashboardOpen, setMoodDashboardOpen] = useState<boolean>(false);
+  const [themeModalOpen, setThemeModalOpen] = useState<boolean>(false);
   const [isReadingMode, setIsReadingMode] = useState<boolean>(false);
   const [previousSidebarState, setPreviousSidebarState] = useState<boolean>(true);
+
+  // User Color Theme state with localStorage initialization
+  const [currentTheme, setCurrentTheme] = useState<ColorThemeId>(() => {
+    try {
+      const saved = localStorage.getItem('reflectai_theme');
+      if (saved && COLOR_THEMES.some((t) => t.id === saved)) {
+        return saved as ColorThemeId;
+      }
+    } catch {}
+    return 'midnight-indigo';
+  });
+
+  // Apply data-theme attribute on document root and persist to localStorage
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    try {
+      localStorage.setItem('reflectai_theme', currentTheme);
+    } catch {}
+  }, [currentTheme]);
+
+  const handleSelectTheme = (themeId: ColorThemeId) => {
+    setCurrentTheme(themeId);
+    if (user?.uid) {
+      updateUserTheme(user.uid, themeId).catch((err) => {
+        console.warn('Failed to sync theme to Firestore profile:', err);
+      });
+    }
+  };
 
   const handleToggleReadingMode = (forced?: boolean) => {
     setIsReadingMode((prev) => {
@@ -54,6 +86,9 @@ export default function App() {
         try {
           const profile = await syncUserProfile(firebaseUser);
           setUser(profile);
+          if (profile.theme && COLOR_THEMES.some((t) => t.id === profile.theme)) {
+            setCurrentTheme(profile.theme);
+          }
         } catch {
           setUser({
             uid: firebaseUser.uid,
@@ -164,10 +199,23 @@ export default function App() {
     );
   }
 
+  const activeThemeObj = COLOR_THEMES.find((t) => t.id === currentTheme) || COLOR_THEMES[0];
+
   return (
-    <div className="relative flex min-h-screen flex-col bg-[#0A0C12] font-sans text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
-      {/* Immersive ambient gradient glow */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.15),transparent)] pointer-events-none z-0" />
+    <div
+      id="reflect-ai-root"
+      className="relative flex min-h-screen flex-col font-sans text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200 transition-colors duration-300"
+      style={{
+        backgroundColor: activeThemeObj.bgHex,
+      }}
+    >
+      {/* Immersive ambient gradient glow dynamically customized per theme */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 transition-all duration-700"
+        style={{
+          background: `radial-gradient(ellipse 80% 60% at 50% -20%, ${activeThemeObj.glowColor}, transparent)`,
+        }}
+      />
 
       <div className="relative z-10 flex flex-col flex-1 min-h-screen">
         <Navbar
@@ -178,6 +226,8 @@ export default function App() {
           onOpenAdmin={() => setAdminDashboardOpen(true)}
           onOpenNotifications={() => setNotificationsModalOpen(true)}
           onOpenMoodDashboard={() => setMoodDashboardOpen(true)}
+          onOpenThemeModal={() => setThemeModalOpen(true)}
+          currentTheme={currentTheme}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
           isReadingMode={isReadingMode}
@@ -251,6 +301,13 @@ export default function App() {
           user={user}
         />
       )}
+
+      <ThemeSettingsModal
+        isOpen={themeModalOpen}
+        onClose={() => setThemeModalOpen(false)}
+        currentTheme={currentTheme}
+        onSelectTheme={handleSelectTheme}
+      />
     </div>
   );
 }

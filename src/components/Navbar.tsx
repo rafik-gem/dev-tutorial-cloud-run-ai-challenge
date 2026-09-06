@@ -10,8 +10,10 @@ import {
   Bell,
   ShieldAlert,
   TrendingUp,
+  Palette,
 } from 'lucide-react';
-import type { UserProfile } from '../types';
+import type { UserProfile, ColorThemeId } from '../types';
+import { COLOR_THEMES } from '../types';
 
 interface NavbarProps {
   user: UserProfile | null;
@@ -21,6 +23,8 @@ interface NavbarProps {
   onOpenAdmin?: () => void;
   onOpenNotifications?: () => void;
   onOpenMoodDashboard?: () => void;
+  onOpenThemeModal?: () => void;
+  currentTheme?: ColorThemeId;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   isReadingMode?: boolean;
@@ -34,11 +38,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdmin,
   onOpenNotifications,
   onOpenMoodDashboard,
+  onOpenThemeModal,
+  currentTheme = 'midnight-indigo',
   sidebarOpen,
   onToggleSidebar,
   isReadingMode = false,
 }) => {
   const isAdmin = user?.role === 'admin' || user?.email === 'rafikrafik3956@gmail.com';
+  const activeThemeObj = COLOR_THEMES.find((t) => t.id === currentTheme) || COLOR_THEMES[0];
 
   return (
     <header
@@ -124,6 +131,28 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
+            {/* Theme Settings Button */}
+            {onOpenThemeModal && (
+              <button
+                id="theme-settings-button"
+                onClick={onOpenThemeModal}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#12151F] px-2.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800/80 hover:text-white hover:border-slate-700 cursor-pointer shadow-xs"
+                title={`Active Theme: ${activeThemeObj.name} (Click to customize)`}
+                aria-label="Customize color theme"
+              >
+                <div className="relative flex items-center justify-center">
+                  <Palette className="h-3.5 w-3.5 text-slate-400" />
+                  <span
+                    className="absolute -top-1 -right-1 h-2 w-2 rounded-full border border-black/40 shadow-xs"
+                    style={{ backgroundColor: activeThemeObj.accentHex }}
+                  />
+                </div>
+                <span className="hidden md:inline text-slate-300 text-xs">
+                  {activeThemeObj.fontBadge}
+                </span>
+              </button>
+            )}
+
             <button
               id="security-info-button"
               onClick={onOpenSecurityModal}
@@ -186,14 +215,36 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </>
         ) : (
-          <button
-            id="nav-security-link"
-            onClick={onOpenSecurityModal}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#12151F] px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800/80 hover:text-white hover:border-slate-700"
-          >
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-            <span>Architecture & Security</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {onOpenThemeModal && (
+              <button
+                id="landing-theme-settings-button"
+                onClick={onOpenThemeModal}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#12151F] px-2.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800/80 hover:text-white hover:border-slate-700 cursor-pointer shadow-xs"
+                title={`Active Theme: ${activeThemeObj.name} (Click to customize)`}
+                aria-label="Customize color theme"
+              >
+                <div className="relative flex items-center justify-center">
+                  <Palette className="h-3.5 w-3.5 text-slate-400" />
+                  <span
+                    className="absolute -top-1 -right-1 h-2 w-2 rounded-full border border-black/40 shadow-xs"
+                    style={{ backgroundColor: activeThemeObj.accentHex }}
+                  />
+                </div>
+                <span className="text-slate-300 text-xs">
+                  {activeThemeObj.fontBadge}
+                </span>
+              </button>
+            )}
+            <button
+              id="nav-security-link"
+              onClick={onOpenSecurityModal}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-[#12151F] px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-800/80 hover:text-white hover:border-slate-700"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Architecture & Security</span>
+            </button>
+          </div>
         )}
       </div>
     </header>

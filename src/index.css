@@ -1,10 +1,82 @@
 @import "tailwindcss";
 
+:root,
+[data-theme="midnight-indigo"] {
+  --theme-bg: #0A0C12;
+  --theme-surface: #121522;
+  --theme-surface-subtle: #0D0F17;
+  --theme-surface-card: #0E111C;
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-border-highlight: rgba(99, 102, 241, 0.35);
+  --theme-accent: #6366f1;
+  --theme-accent-hover: #4f46e5;
+  --theme-glow: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(99, 102, 241, 0.18), transparent);
+  --theme-accent-gradient: linear-gradient(135deg, #6366f1, #9333ea);
+  --theme-ring: rgba(99, 102, 241, 0.4);
+}
+
+[data-theme="midnight-blue"] {
+  --theme-bg: #060B14;
+  --theme-surface: #0D172A;
+  --theme-surface-subtle: #080E1A;
+  --theme-surface-card: #0A1424;
+  --theme-border: rgba(56, 189, 248, 0.12);
+  --theme-border-highlight: rgba(14, 165, 233, 0.4);
+  --theme-accent: #0ea5e9;
+  --theme-accent-hover: #0284c7;
+  --theme-glow: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(14, 165, 233, 0.20), transparent);
+  --theme-accent-gradient: linear-gradient(135deg, #0ea5e9, #2563eb);
+  --theme-ring: rgba(14, 165, 233, 0.4);
+}
+
+[data-theme="forest-green"] {
+  --theme-bg: #06120D;
+  --theme-surface: #0D2118;
+  --theme-surface-subtle: #08140E;
+  --theme-surface-card: #0A1A13;
+  --theme-border: rgba(52, 211, 153, 0.12);
+  --theme-border-highlight: rgba(16, 185, 129, 0.4);
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-glow: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(16, 185, 129, 0.19), transparent);
+  --theme-accent-gradient: linear-gradient(135deg, #10b981, #0d9488);
+  --theme-ring: rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="amethyst-twilight"] {
+  --theme-bg: #0E0817;
+  --theme-surface: #1B112D;
+  --theme-surface-subtle: #120A1C;
+  --theme-surface-card: #150D24;
+  --theme-border: rgba(192, 132, 252, 0.12);
+  --theme-border-highlight: rgba(168, 85, 247, 0.4);
+  --theme-accent: #a855f7;
+  --theme-accent-hover: #9333ea;
+  --theme-glow: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(168, 85, 247, 0.19), transparent);
+  --theme-accent-gradient: linear-gradient(135deg, #a855f7, #c026d3);
+  --theme-ring: rgba(168, 85, 247, 0.4);
+}
+
+[data-theme="obsidian-amber"] {
+  --theme-bg: #100D09;
+  --theme-surface: #1E1912;
+  --theme-surface-subtle: #15100B;
+  --theme-surface-card: #17130D;
+  --theme-border: rgba(251, 191, 36, 0.12);
+  --theme-border-highlight: rgba(245, 158, 11, 0.4);
+  --theme-accent: #f59e0b;
+  --theme-accent-hover: #d97706;
+  --theme-glow: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(245, 158, 11, 0.18), transparent);
+  --theme-accent-gradient: linear-gradient(135deg, #f59e0b, #d97706);
+  --theme-ring: rgba(245, 158, 11, 0.4);
+}
+
 @layer base {
   body {
-    background-color: #0a0c12;
+    background-color: var(--theme-bg, #0a0c12);
     color: #e2e8f0;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
 }
 
@@ -23,3 +95,4 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.22);
 }
+

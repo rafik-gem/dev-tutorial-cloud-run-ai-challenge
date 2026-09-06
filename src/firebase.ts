@@ -23,7 +23,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
-import type { InteractionDocument, UserProfile, NotificationSettings, SystemTelemetry } from './types';
+import type { InteractionDocument, UserProfile, NotificationSettings, SystemTelemetry, ColorThemeId } from './types';
 
 // Singleton initialization for Firebase
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -69,11 +69,15 @@ export async function syncUserProfile(user: User): Promise<UserProfile> {
 
   const isDesignatedAdmin = user.email === 'rafikrafik3956@gmail.com';
   let role: 'user' | 'admin' = isDesignatedAdmin ? 'admin' : 'user';
+  let theme: ColorThemeId = 'midnight-indigo';
 
   if (snap.exists()) {
     const existing = snap.data();
     if (existing.role) {
       role = existing.role;
+    }
+    if (existing.theme) {
+      theme = existing.theme;
     }
   }
 
@@ -83,6 +87,7 @@ export async function syncUserProfile(user: User): Promise<UserProfile> {
     displayName: user.displayName,
     photoURL: user.photoURL,
     role,
+    theme,
   };
 
   await setDoc(userRef, stripUndefined({
@@ -91,6 +96,18 @@ export async function syncUserProfile(user: User): Promise<UserProfile> {
   }), { merge: true });
 
   return profile;
+}
+
+/**
+ * Persists the user's selected color theme to their Firestore profile
+ */
+export async function updateUserTheme(userId: string, theme: ColorThemeId): Promise<void> {
+  if (!userId) return;
+  const userRef = doc(db, 'users', userId);
+  await setDoc(userRef, stripUndefined({
+    theme,
+    updatedAt: new Date().toISOString(),
+  }), { merge: true });
 }
 
 /**
